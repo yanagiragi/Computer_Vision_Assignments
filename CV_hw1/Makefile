@@ -1,4 +1,4 @@
-FILENAME=main.cpp
+FILENAME=$(wildcard *.cpp)
 OUTPUTNAME=cvhw1
 CFLAGS=-g -O2
 COMP=g++

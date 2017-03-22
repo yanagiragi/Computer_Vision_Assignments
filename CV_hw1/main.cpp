@@ -8,6 +8,8 @@ int main(int argc, char **argv) {
 
     processor p = processor(pathname);
 
+    p.calculateNormals();
+
 	/*Mat Image = imread("test/bunny/pic1.bmp", IMREAD_GRAYSCALE);
 
 	Mat tempImage = Image.clone();
