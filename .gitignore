@@ -27,3 +27,9 @@
 *.exe
 *.out
 *.app
+
+*.swp
+
+
+CV_hw1/ref
+cvhw1
