@@ -1,10 +1,15 @@
 //#include <opencv/highgui.h>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <iostream>
 using namespace cv;
 
 int main() {
-	Mat Image = imread("test/bunny/pic1.bmp", IMREAD_GRAYSCALE);
+
+
+	std::cout << CV_VERSION << std::endl;
+
+	Mat Image = imread("./bunny/pic1.bmp", IMREAD_GRAYSCALE);
 
 	Mat tempImage = Image.clone();
 	Mat smallImage(Image.rows / 2, Image.cols / 2, CV_8U);

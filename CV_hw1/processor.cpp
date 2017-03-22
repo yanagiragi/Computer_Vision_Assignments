@@ -2,39 +2,27 @@
 
 void processor::calculateNormals()
 {
-    Mat allImage(
-            m_originalImg.size(), 
-            m_originalImg.begin()->second.rows * m_originalImg.begin()->second.cols,
-            CV_8UC3
-            );
+	Mat src = Mat(m_originalImg.size(), m_originalImg.begin()->second.total(), CV_8U);
+	cout << m_originalImg.size() << endl;
+	for(int i = 0; i < 6; ++i){
+		for(int rowindex = 0; rowindex < m_originalImg[i].rows; ++rowindex){
+			for(int colindex = 0; colindex < m_originalImg[i].cols; ++colindex){
+				src.at<uchar>(i, rowindex * m_originalImg[i].cols + colindex) = m_originalImg[i].at<uchar>(rowindex, colindex);
+			}
+		}
+	}
+	/*
+	cout << src.rows << "," <<  src.cols << endl;
+	for(int rowindex = 0; rowindex < src.rows; ++rowindex){
+		for(int colindex = 0; colindex < src.cols; ++colindex){
+			cout << static_cast<int>(src.at<uchar>(rowindex, colindex)) << " ";
+		}
+	}
+	*/
 
-    cout << allImage.rows << endl;
-
-    for(auto i = m_originalImg.begin(); i != m_originalImg.end(); ++i){
-        for(int rowindex = 0; rowindex < i->second.rows; ++rowindex){
-            for(int colindex = 0; colindex < i->second.cols; ++colindex){
-                allImage.at<uchar>(i->first, rowindex * i->second.cols + colindex) = (uchar)(255.0);
-                cout << "(" << i->first << " , " <<  rowindex << " | "<<  colindex << ")" << endl;
-            }
-        }
-    }
-    
-    /*for(auto i = m_originalImg.begin(); i != m_originalImg.end(); ++i){
-        for(int rowindex = 0; rowindex < i->second.rows; ++rowindex){
-            for(int colindex = 0; colindex < i->second.cols; ++colindex){
-                //allImage.at<uchar>(i->first,rowindex * i->second.cols + colindex) = i->second.at<uchar>(rowindex, colindex);
-                allImage.at<uchar>(i->first,rowindex * i->second.cols + colindex) = (uchar)(255.0);
-            }
-        }
-    }*/
-
-    //cout << m_originalImg.begin()->second.rows << " * " << m_originalImg.begin()->second.cols << endl;
-
-    //cout << allImage.cols * allImage.rows << endl;
-
-    //imshow("res", allImage);
-    //waitKey(100);
-    
-    cout << "hi" << endl;
 }
 
+void processor::foldMatrix()
+{
+
+}
