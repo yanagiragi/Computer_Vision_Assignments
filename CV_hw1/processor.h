@@ -18,6 +18,8 @@ using namespace std;
 class processor {
 
     private :
+        const float kd = 1.0;
+        const float lightIntensity = 1.0;
         map<int, Mat> m_originalImg = map<int, Mat>();
         map<int, Point3_<int>> m_originalLightSrc = map<int, Point3_<int>>();
     public :
@@ -55,7 +57,7 @@ class processor {
             free(str);
 
             // Tranverse
-            for(auto i = m_originalImg.begin(); i != m_originalImg.end(); ++i){
+            /*for(auto i = m_originalImg.begin(); i != m_originalImg.end(); ++i){
                 
                 if(i->second.empty()) continue;
                 cout << "id = " << i->first << endl;
@@ -65,7 +67,7 @@ class processor {
                 waitKey(25);
             }
 
-            cout << "Done" << endl;
+            cout << "Done" << endl;*/
 
         }
 
