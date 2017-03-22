@@ -76,9 +76,9 @@ class processor {
 
         ~processor()
         {
-            for(auto i = m_originalImg.begin(); i != m_originalImg.end(); ++i)
+            /*for(auto i = m_originalImg.begin(); i != m_originalImg.end(); ++i)
 		i->second.release();
-            m_originalLightSrc.empty();
+            m_originalLightSrc.empty();*/
         }
 
 
