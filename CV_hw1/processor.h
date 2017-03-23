@@ -84,7 +84,8 @@ class processor {
 
         // Functions
         void calculateNormals();
-	void foldMatrix();
+    	Mat foldImgMatrix();
+    	Mat foldLightVector();
 };
 
 #endif
