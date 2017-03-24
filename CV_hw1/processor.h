@@ -7,6 +7,7 @@
 #include <map>
 #include <iostream>
 #include <cstring>
+#include <cmath>
 #include <stdio.h>
 #include <string.h>
 #include <dirent.h>
