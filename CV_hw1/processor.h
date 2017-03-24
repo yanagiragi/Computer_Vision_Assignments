@@ -26,6 +26,7 @@ class processor {
         const float lightIntensity = 1.0;
         map<int, Mat> m_originalImg = map<int, Mat>();
         map<int, Point3_<int>> m_originalLightSrc = map<int, Point3_<int>>();
+        Mat m_normal;
 
     public :
         processor(string srcPath)

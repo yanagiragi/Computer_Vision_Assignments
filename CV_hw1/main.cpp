@@ -6,9 +6,11 @@ int main(int argc, char **argv) {
 
 	processor p = processor(pathname);
 
+	std::cout << "Finished Reading LightSource.txt and Src Pictures in directory: " << pathname << std::endl;
+	
 	p.calculateNormals();
 
-	std::cout << "Hello" << std::endl;
+	std::cout << "Finished Calculate Normals" << std::endl;
 	
 	return 0;
 }

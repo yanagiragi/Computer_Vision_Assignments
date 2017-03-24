@@ -2,7 +2,6 @@
 
 void processor::calculateNormals()
 {
-
 	// First, Solve color = light * b(x,y) , which b(x,y) stands for Kd * normal(x,y)
 	Mat src = foldImgMatrix();
 	Mat light = foldLightVector();
@@ -10,6 +9,9 @@ void processor::calculateNormals()
 	// pseudo inverse
 	Mat normal = (light.t() * light).inv() * light.t() * src;
 
+	m_normal = normal;
+
+	return;
 }
 
 Mat processor::foldImgMatrix()
