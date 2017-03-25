@@ -76,12 +76,7 @@ class processor {
 
         }
 
-        ~processor()
-        {
-            /*for(auto i = m_originalImg.begin(); i != m_originalImg.end(); ++i)
-		i->second.release();
-            m_originalLightSrc.empty();*/
-        }
+        ~processor() {}
 
 
         // Functions
@@ -89,6 +84,10 @@ class processor {
     	Mat foldImgMatrix();
     	Mat foldLightVector();
     	void previewNormals();
+    	void constructSurface();
+    	void dumpPly();
+
+    	double clamp(double, double, double);
 };
 
 #endif

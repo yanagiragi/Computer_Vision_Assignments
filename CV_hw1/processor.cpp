@@ -37,7 +37,7 @@ void processor::calculateNormals()
 		// ref: http://docs.opencv.org/3.0-beta/modules/highgui/doc/user_interface.html#imshow
 
 
-		albedo.at<double>(j / m_originalImg.begin()->second.cols, j % m_originalImg.begin()->second.cols) = sum * 255.0;
+		albedo.at<double>(j / m_originalImg.begin()->second.cols, j % m_originalImg.begin()->second.cols) = sum;
 
 	}
 
@@ -91,12 +91,103 @@ Mat processor::foldLightVector()
 	return light;
 }
 
+void processor::dumpPly()
+{
+	string prefix = "ply\nformat ascii 1.0\ncomment alpha=1.0\nelement vertex " + to_string(m_normal.rows * m_normal.cols) + "\nproperty float x\nproperty float y\nproperty float z\nproperty uchar red\nproperty uchar green\nproperty uchar blue z\nend_header";
+	
+	cout << prefix << endl;
+
+	for(int i = 0; i < m_originalImg.begin()->second.rows; ++i){
+		for(int j = 0; j < m_originalImg.begin()->second.cols; ++j){
+			Vec3d tmp = m_normal.at<Vec3d>(i, j);
+
+			cout << i << " "
+				<< j << " "
+				//<< "0 255 255 255" << endl;
+				<< tmp.val[2] << " 255 255 255" << endl;
+		}
+	}
+}
+
+void processor::constructSurface()
+{
+	/*
+		> > >     > > > 
+		o o o  -> > > >
+		o o o     o o o 
+	*/
+
+	double x = 0, y = 0;
+
+	Mat surface(m_originalImg.begin()->second.rows, m_originalImg.begin()->second.cols, CV_64FC3);
+
+	for(int i = 0; i < m_originalImg.begin()->second.rows; ++i){
+		for(int j = 0; j < m_originalImg.begin()->second.cols; ++j){
+
+			double na,nb,nc, partialX, partialY;
+			Vec3d tmp = m_normal.at<Vec3d>(i,j);
+			Vec3d prev;
+
+			if(j != 0){
+				prev = m_normal.at<Vec3d>(i, j - 1);
+			}
+
+			na = tmp.val[0];
+			nb = tmp.val[1];
+			nc = tmp.val[2];
+
+			if(na == 0 || nc == 0){
+				partialX = 0.0;
+			}
+			else{
+				partialX = -1.0 * na / nc;
+			}
+
+			if(nb == 0 || nc == 0){
+				partialY = 0.0;
+			}
+			else{
+				partialY = -1 * nb / nc;
+			}
+
+			if(j != 0){
+				tmp.val[2] = prev.val[2] - (partialX + partialY);
+			}
+			else{
+				tmp.val[2] = partialX + partialY;
+			}
+			
+			m_normal.at<Vec3d>(i,j) = tmp;
+
+			// current version: not adding orignalz from previous calculation
+
+		}
+	}
+
+	return ;
+}
+
 void processor::previewNormals()
 {
-	// cout << m_normalR << endl;
+	//cout << m_normal << endl;
 	imshow("albedo", m_albedo);
 
-	imshow("normal", m_normal);
+	Mat normalMap(m_normal.rows , m_normal.cols, CV_8UC3);
+
+	for(int i = 0; i < m_normal.rows; ++i){
+		for(int j = 0; j < m_normal.cols; ++j){
+			Vec3d tmp = m_normal.at<Vec3d>(i,j);
+
+			tmp.val[0] = tmp.val[0]; // B
+			tmp.val[1] = tmp.val[1]; // G
+			tmp.val[2] = tmp.val[2]; // R
+
+			normalMap.at<Vec3b>(i,j) = Vec3b(tmp.val[2] * 127 + 128, tmp.val[1] * 127 + 128, tmp.val[0] * 127 + 128);
+		}
+	}
+
+	//imshow("normal", m_normal);
+	imshow("nmap", normalMap);
 	imshow("normalB", m_normalB);
 	imshow("normalG", m_normalG);
 	imshow("normalR", m_normalR);
@@ -104,4 +195,8 @@ void processor::previewNormals()
 	waitKey(0);
 	
 	return ;
+}
+
+double processor::clamp(double src, double min, double max){
+	return (src <= min) ? min : ((src >= max) ? max : src);
 }
