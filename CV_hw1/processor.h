@@ -26,7 +26,7 @@ class processor {
         const float lightIntensity = 1.0;
         map<int, Mat> m_originalImg = map<int, Mat>();
         map<int, Point3_<int>> m_originalLightSrc = map<int, Point3_<int>>();
-        Mat m_normal;
+        Mat m_normal, m_albedo, m_normalB, m_normalG, m_normalR;
 
     public :
         processor(string srcPath)
@@ -88,6 +88,7 @@ class processor {
         void calculateNormals();
     	Mat foldImgMatrix();
     	Mat foldLightVector();
+    	void previewNormals();
 };
 
 #endif

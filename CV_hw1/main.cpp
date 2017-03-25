@@ -11,6 +11,8 @@ int main(int argc, char **argv) {
 	p.calculateNormals();
 
 	std::cout << "Finished Calculate Normals" << std::endl;
+
+	p.previewNormals();
 	
 	return 0;
 }
