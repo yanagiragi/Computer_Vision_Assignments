@@ -36,7 +36,6 @@ void processor::calculateNormals()
 		// It is because we use double, it will automaticlly times 255.0 when imshow
 		// ref: http://docs.opencv.org/3.0-beta/modules/highgui/doc/user_interface.html#imshow
 
-
 		albedo.at<double>(j / m_originalImg.begin()->second.cols, j % m_originalImg.begin()->second.cols) = sum;
 
 	}
@@ -101,10 +100,7 @@ void processor::dumpPly()
 		for(int j = 0; j < m_originalImg.begin()->second.cols; ++j){
 			Vec3d tmp = m_normal.at<Vec3d>(i, j);
 
-			cout << i << " "
-				<< j << " "
-				//<< "0 255 255 255" << endl;
-				<< tmp.val[2] << " 255 255 255" << endl;
+			cout << i << " " << j << " " << tmp.val[2] << " 255 255 255" << endl;
 		}
 	}
 }
@@ -112,15 +108,117 @@ void processor::dumpPly()
 void processor::constructSurface()
 {
 	/*
-		> > >     > > > 
-		o o o  -> > > >
-		o o o     o o o 
+		v x x      o > >     o o o
+		v x x  ->  o x x  -> o > >
+		v x x      o x x     o x x 
 	*/
 
 	double x = 0, y = 0;
 
 	Mat surface(m_originalImg.begin()->second.rows, m_originalImg.begin()->second.cols, CV_64FC3);
 
+	for(int i = 0; i < m_originalImg.begin()->second.rows; ++i){
+		double na,nb,nc, partialX, partialY;
+		Vec3d tmp = m_normal.at<Vec3d>(i,0);
+		Vec3d prev;
+
+		if(i != 0){
+			prev = m_normal.at<Vec3d>(i - 1,0);
+		}
+
+		na = tmp.val[0];
+		nb = tmp.val[1];
+		nc = tmp.val[2];
+
+		if(na == 0 || nc == 0){
+			partialX = 0.0;
+		}
+		else{
+			partialX = na / nc;
+		}
+
+		if(nb == 0 || nc == 0){
+			partialY = 0.0;
+		}
+		else{
+			partialY = nb / nc;
+		}
+
+		// clamp for special peeks
+		partialX = clamp(partialX, -1.0, 1.0);
+		partialY = clamp(partialY, -1.0, 1.0);
+
+		if(i != 0){
+			tmp.val[2] = prev.val[2] - (partialY);
+		}
+		else{
+			tmp.val[2] = partialY;
+		}
+		
+
+		m_normal.at<Vec3d>(i,0) = tmp;
+
+	}
+
+	for(int i = 0; i < m_originalImg.begin()->second.rows; ++i){
+
+		x = 0;
+
+		for(int j = 1; j < m_originalImg.begin()->second.cols; ++j){
+
+			double na,nb,nc, partialX, partialY;
+			Vec3d tmp = m_normal.at<Vec3d>(i,j);
+			Vec3d prev;
+
+			if(j != 0){
+				prev = m_normal.at<Vec3d>(i, j - 1);
+			}
+
+			na = tmp.val[0];
+			nb = tmp.val[1];
+			nc = tmp.val[2];
+
+			if(na == 0 || nc == 0){
+				partialX = 0.0;
+			}
+			else{
+				partialX = na / nc;
+			}
+
+			if(nb == 0 || nc == 0){
+				partialY = 0.0;
+			}
+			else{
+				partialY = nb / nc;
+			}
+
+			// clamp for special peeks
+			partialX = clamp(partialX, -1.0, 1.0);
+			partialY = clamp(partialY, -1.0, 1.0);
+
+			x += partialX;
+
+			if(j != 0){
+				/*if((prev.val[2] + partialX) < 0)
+					tmp.val[2] = prev.val[2] - (partialX);
+				else*/
+				if(tmp.val[2] == 0)
+					tmp.val[2] = 0;
+				else if(x <= 0){
+					tmp.val[2] = prev.val[2] + (partialX);
+				}
+				else
+					tmp.val[2] = prev.val[2] - (partialX);
+			}
+			else{ // j == 0
+				tmp.val[2] = -1 * partialX;
+			}
+			
+			m_normal.at<Vec3d>(i,j) = tmp;
+		}
+	}
+
+	/*
 	for(int i = 0; i < m_originalImg.begin()->second.rows; ++i){
 		for(int j = 0; j < m_originalImg.begin()->second.cols; ++j){
 
@@ -150,11 +248,15 @@ void processor::constructSurface()
 				partialY = -1 * nb / nc;
 			}
 
+			// clamp for special peeks
+			partialX = clamp(partialX, -1.0, 1.0);
+			partialY = clamp(partialY, -1.0, 1.0);
+
 			if(j != 0){
-				tmp.val[2] = prev.val[2] - (partialX + partialY);
+				tmp.val[2] = prev.val[2] + (partialX);
 			}
 			else{
-				tmp.val[2] = partialX + partialY;
+				tmp.val[2] = partialX;
 			}
 			
 			m_normal.at<Vec3d>(i,j) = tmp;
@@ -163,7 +265,7 @@ void processor::constructSurface()
 
 		}
 	}
-
+	*/
 	return ;
 }
 

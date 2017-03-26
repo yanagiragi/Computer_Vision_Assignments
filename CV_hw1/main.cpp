@@ -2,7 +2,7 @@
 
 int main(int argc, char **argv) {
 
-	std::string pathname = "test/bunny/"; // Remeber to add slash at bottom
+	std::string pathname = "test/star/"; // Remeber to add slash at bottom
 
 	processor p = processor(pathname);
 
@@ -12,7 +12,7 @@ int main(int argc, char **argv) {
 
 	//std::cout << "Finished Calculate Normals" << std::endl;
 
-	p.previewNormals();
+	//p.previewNormals();
 
 	p.constructSurface();
 
