@@ -18,9 +18,9 @@ void processor::calculateNormals()
 
 	for(int j = 0; j < b.cols; ++j){
 		Vec3d tmpBGR (b.at<double>(0, j), b.at<double>(1,j), b.at<double>(2,j));
-		
-		double sum = sqrt ( tmpBGR.val[0] * tmpBGR.val[0] + tmpBGR.val[1] * tmpBGR.val[1] + tmpBGR.val[2] * tmpBGR.val[2] );
 
+		double sum = sqrt ( tmpBGR.val[0] * tmpBGR.val[0] + tmpBGR.val[1] * tmpBGR.val[1] + tmpBGR.val[2] * tmpBGR.val[2] );
+		// cout << sum << endl;
 		if(sum != 0){ // or it will becone nan
 			tmpBGR.val[0] /= sum;
 			tmpBGR.val[1] /= sum;
@@ -52,29 +52,29 @@ void processor::calculateNormals()
 Mat processor::foldImgMatrix()
 {
 	Mat src = Mat(m_originalImg.size(), m_originalImg.begin()->second.total(), CV_64F);
-	
+
 	for(int i = 0; i < m_originalImg.size(); ++i){
 		for(int rowindex = 0; rowindex < m_originalImg[i+1].rows; ++rowindex){
 			for(int colindex = 0; colindex < m_originalImg[i+1].cols; ++colindex){
-				 src.at<double>(i, rowindex * m_originalImg[i+1].cols + colindex) = static_cast<double>(m_originalImg[i+1].at<uchar>(rowindex, colindex)) / 255.0;
+				src.at<double>(i, rowindex * m_originalImg[i+1].cols + colindex) = static_cast<double>(m_originalImg[i+1].at<uchar>(rowindex, colindex)) / 255.0;
 			}
 		}
 	}
-    
-    return src;
+
+	return src;
 }
 
 Mat processor::foldLightVector()
 {
 	Mat light = Mat(m_originalLightSrc.size(), 3, CV_64F);
-	
+
 	for(int i = 0; i < m_originalLightSrc.size(); ++i){
-		
+
 		Point3_<double> tmp = Point3_<double>(static_cast<double>(m_originalLightSrc[i+1].x), static_cast<double>(m_originalLightSrc[i+1].y), static_cast<double>(m_originalLightSrc[i+1].z));
-		
+
 		// Normalize to 0.0 ~ 1.0 (By dividing 255.0)
 		double sum = sqrt(tmp.x * tmp.x + tmp.y * tmp.y + tmp.z * tmp.z);
-		
+
 		if(sum != 0){
 			light.at<double>(i,0) = static_cast<double>(m_originalLightSrc[i+1].x) / sum;
 			light.at<double>(i,1) = static_cast<double>(m_originalLightSrc[i+1].y) / sum;
@@ -93,185 +93,134 @@ Mat processor::foldLightVector()
 void processor::dumpPly()
 {
 	string prefix = "ply\nformat ascii 1.0\ncomment alpha=1.0\nelement vertex " + to_string(m_normal.rows * m_normal.cols) + "\nproperty float x\nproperty float y\nproperty float z\nproperty uchar red\nproperty uchar green\nproperty uchar blue z\nend_header";
-	
+
 	cout << prefix << endl;
 
 	for(int i = 0; i < m_originalImg.begin()->second.rows; ++i){
 		for(int j = 0; j < m_originalImg.begin()->second.cols; ++j){
 			Vec3d tmp = m_normal.at<Vec3d>(i, j);
-
-			cout << i << " " << j << " " << tmp.val[2] << " 255 255 255" << endl;
+			if(i == 0)
+				cout << i << " " << j << " " << tmp.val[2] << " 0 0 255" << endl;
+			else if(m_originalImg.begin()->second.at<uchar>(i,j) == 0) // may lead to an error, cause it should be sampled in six pictures
+				cout << i << " " << j << " " << tmp.val[2] << " 255 0 0" << endl;
+			else if(tmp.val[2] != 0)
+				cout << i << " " << j << " " << tmp.val[2] << " 255 255 255" << endl;
 		}
 	}
 }
 
-void processor::constructSurface()
+void processor::constructSurfaceH()
 {
 	/*
-		v x x      o > >     o o o
-		v x x  ->  o x x  -> o > >
-		v x x      o x x     o x x 
+		o o o 	o o o 	o o o
+		x x x   o > > 	o o o
+		x x x   o x x 	o > >
 	*/
-
 	double x = 0, y = 0;
 
 	Mat surface(m_originalImg.begin()->second.rows, m_originalImg.begin()->second.cols, CV_64FC3);
 
 	for(int i = 0; i < m_originalImg.begin()->second.rows; ++i){
+
 		double na,nb,nc, partialX, partialY;
 		Vec3d tmp = m_normal.at<Vec3d>(i,0);
-		Vec3d prev;
 
-		if(i != 0){
-			prev = m_normal.at<Vec3d>(i - 1,0);
-		}
+		na = tmp.val[0]; nb = tmp.val[1]; nc = tmp.val[2];
 
-		na = tmp.val[0];
-		nb = tmp.val[1];
-		nc = tmp.val[2];
+		partialY = (nb == 0 || nc == 0) ? 0.0 : nb / nc;
+		partialY = clamp(partialY, threshold);
 
-		if(na == 0 || nc == 0){
-			partialX = 0.0;
-		}
-		else{
-			partialX = na / nc;
-		}
-
-		if(nb == 0 || nc == 0){
-			partialY = 0.0;
-		}
-		else{
-			partialY = nb / nc;
-		}
-
-		// clamp for special peeks
-		partialX = clamp(partialX, -1.0, 1.0);
-		partialY = clamp(partialY, -1.0, 1.0);
-
-		if(i != 0){
-			tmp.val[2] = prev.val[2] - (partialY);
-		}
-		else{
-			tmp.val[2] = partialY;
-		}
+		tmp.val[2] = partialY;		
 		
-
 		m_normal.at<Vec3d>(i,0) = tmp;
-
 	}
 
 	for(int i = 0; i < m_originalImg.begin()->second.rows; ++i){
-
 		x = 0;
-
 		for(int j = 1; j < m_originalImg.begin()->second.cols; ++j){
 
 			double na,nb,nc, partialX, partialY;
 			Vec3d tmp = m_normal.at<Vec3d>(i,j);
-			Vec3d prev;
+			Vec3d prev = m_normal.at<Vec3d>(i, j - 1);
 
-			if(j != 0){
-				prev = m_normal.at<Vec3d>(i, j - 1);
-			}
+			na = tmp.val[0]; nb = tmp.val[1]; nc = tmp.val[2];
 
-			na = tmp.val[0];
-			nb = tmp.val[1];
-			nc = tmp.val[2];
-
-			if(na == 0 || nc == 0){
-				partialX = 0.0;
-			}
-			else{
-				partialX = na / nc;
-			}
-
-			if(nb == 0 || nc == 0){
-				partialY = 0.0;
-			}
-			else{
-				partialY = nb / nc;
-			}
-
-			// clamp for special peeks
-			partialX = clamp(partialX, -1.0, 1.0);
-			partialY = clamp(partialY, -1.0, 1.0);
-
+			partialX = (na == 0 || nc == 0) ? 0.0 : na / nc;
+			partialX = clamp(partialX, threshold);
 			x += partialX;
 
-			if(j != 0){
-				/*if((prev.val[2] + partialX) < 0)
-					tmp.val[2] = prev.val[2] - (partialX);
-				else*/
-				if(tmp.val[2] == 0)
-					tmp.val[2] = 0;
-				else if(x <= 0){
-					tmp.val[2] = prev.val[2] + (partialX);
-				}
-				else
-					tmp.val[2] = prev.val[2] - (partialX);
+			if(tmp.val[2] == 0){
+				tmp.val[2] = 0;
 			}
-			else{ // j == 0
-				tmp.val[2] = -1 * partialX;
+			else if(x <= 0){
+				// avoid digging below the plane
+				tmp.val[2] = prev.val[2] + (partialX);
+			}
+			else{
+				tmp.val[2] = prev.val[2] - (partialX);
 			}
 			
 			m_normal.at<Vec3d>(i,j) = tmp;
 		}
 	}
+	
+	return ;
+}
 
+void processor::constructSurfaceHV()
+{
 	/*
+		o > >   o o o	o o o
+		x x x   v v v   o o o
+		x x x   x x x   v v v
+	*/
+
+	Mat surface(m_originalImg.begin()->second.rows, m_originalImg.begin()->second.cols, CV_64FC3);
+
 	for(int i = 0; i < m_originalImg.begin()->second.rows; ++i){
 		for(int j = 0; j < m_originalImg.begin()->second.cols; ++j){
 
 			double na,nb,nc, partialX, partialY;
 			Vec3d tmp = m_normal.at<Vec3d>(i,j);
-			Vec3d prev;
 
-			if(j != 0){
-				prev = m_normal.at<Vec3d>(i, j - 1);
-			}
+			na = tmp.val[0]; nb = tmp.val[1]; nc = tmp.val[2];
 
-			na = tmp.val[0];
-			nb = tmp.val[1];
-			nc = tmp.val[2];
-
-			if(na == 0 || nc == 0){
-				partialX = 0.0;
-			}
-			else{
-				partialX = -1.0 * na / nc;
-			}
-
-			if(nb == 0 || nc == 0){
-				partialY = 0.0;
-			}
-			else{
-				partialY = -1 * nb / nc;
-			}
+			partialX = (na == 0 || nc == 0) ? 0.0 : na / nc;
+			partialY = (nb == 0 || nc == 0) ? 0.0 : nb / nc;
 
 			// clamp for special peeks
-			partialX = clamp(partialX, -1.0, 1.0);
-			partialY = clamp(partialY, -1.0, 1.0);
+			partialX = clamp(partialX, threshold);
+			partialY = clamp(partialY, threshold);
 
-			if(j != 0){
-				tmp.val[2] = prev.val[2] + (partialX);
+			if(i == 0){
+				if(j != 0){
+					Vec3d prev = m_normal.at<Vec3d>(i,j-1);
+					tmp.val[2] = prev.val[2] - (partialX);
+				}
+				else{
+					tmp.val[2] = partialX;
+				}
+
 			}
 			else{
-				tmp.val[2] = partialX;
+				Vec3d prev = m_normal.at<Vec3d>(i-1,j);
+
+				if(j != 0){
+					tmp.val[2] = prev.val[2] - (partialY);
+				}
+				else{
+					tmp.val[2] = partialY;
+				}
 			}
-			
 			m_normal.at<Vec3d>(i,j) = tmp;
-
-			// current version: not adding orignalz from previous calculation
-
 		}
 	}
-	*/
+
 	return ;
 }
 
 void processor::previewNormals()
 {
-	//cout << m_normal << endl;
 	imshow("albedo", m_albedo);
 
 	Mat normalMap(m_normal.rows , m_normal.cols, CV_8UC3);
@@ -295,10 +244,13 @@ void processor::previewNormals()
 	imshow("normalR", m_normalR);
 
 	waitKey(0);
-	
+
 	return ;
 }
 
+double processor::clamp(double src, double thres){
+	return clamp(src, -1.0 * thres, 1.0 * thres);
+}
 double processor::clamp(double src, double min, double max){
 	return (src <= min) ? min : ((src >= max) ? max : src);
 }
