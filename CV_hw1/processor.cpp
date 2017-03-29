@@ -1,5 +1,77 @@
 #include "processor.h"
 
+Mat processor::getWeye(int rowindex, int colindex)
+{
+	Mat tmp = Mat::eye(m_originalLightSrc.size(), m_originalLightSrc.size(), CV_64F);
+	for(int i = 0; i < m_originalLightSrc.size(); ++i){
+		tmp.at<double>(i, i) = static_cast<double>(pow(getWeight(m_originalImg[i+1].at<uchar>(rowindex, colindex)),2));
+	}
+	return tmp;
+}
+
+uchar processor::getWeight(uchar pixel)
+{
+	return (pixel > 1 && pixel < 255) ? 1 : 0;
+}
+
+void processor::calculateNormalsWithWeights()
+{
+
+	// split b to normals and albedo
+	Mat normal(m_originalImg.begin()->second.rows, m_originalImg.begin()->second.cols, CV_64FC3);
+	Mat normalR(m_originalImg.begin()->second.rows, m_originalImg.begin()->second.cols, CV_64FC3);
+	Mat normalG(m_originalImg.begin()->second.rows, m_originalImg.begin()->second.cols, CV_64FC3);
+	Mat normalB(m_originalImg.begin()->second.rows, m_originalImg.begin()->second.cols, CV_64FC3);
+	Mat albedo(m_originalImg.begin()->second.rows, m_originalImg.begin()->second.cols, CV_64F);
+
+	// First, Solve color = light * b(x,y) , which b(x,y) stands for Kd * normal(x,y)
+	Mat src = foldImgMatrix();
+	Mat light = foldLightVector();
+
+	// pseudo inverse using least square sum with weight	
+	for(int i = 0; i < m_originalImg.begin()->second.rows; ++i){
+		for(int j = 0; j < m_originalImg.begin()->second.cols; ++j){
+
+			Mat color(m_originalLightSrc.size(), 1, CV_64F);
+			for(int lightindex = 0; lightindex < m_originalLightSrc.size(); ++lightindex)
+				color.at<double>(lightindex, 1) = src.at<double>(lightindex, i * m_originalImg.begin()->second.cols + j);
+
+			//Mat w = Mat::eye(light.rows, light.rows, CV_64F) * getWeye(i,j); // ** 2
+			Mat w = getWeye(i,j); // ** 2
+			Mat b = (light.t() * w * light).inv() * light.t() * w * color;
+			
+			Vec3d tmpBGR(b.at<double>(0, 0), b.at<double>(0, 1), b.at<double>(0, 2));
+			double norm = sqrt(
+					pow(b.at<double>(0, 0), 2) +
+					pow(b.at<double>(0, 1), 2) +
+					pow(b.at<double>(0, 2), 2)
+				);
+
+			if(norm == 0){
+				tmpBGR.val[0] = tmpBGR.val[1] = 0;
+				tmpBGR.val[2] = 1;
+			}
+			else{
+				tmpBGR /= norm;
+			}
+
+			normal.at<Vec3d>(i, j) = tmpBGR;
+			albedo.at<double>(i, j) = norm;
+
+			//cout << b << endl;			
+		}	
+	}
+	
+	m_normal = normal;
+	m_normalB = normalB;
+	m_normalG = normalG;
+	m_normalR = normalR;
+	m_albedo = albedo;
+
+	return;
+	
+}
+
 void processor::calculateNormals()
 {
 	// First, Solve color = light * b(x,y) , which b(x,y) stands for Kd * normal(x,y)
@@ -8,7 +80,7 @@ void processor::calculateNormals()
 
 	// pseudo inverse
 	Mat b = (light.t() * light).inv() * light.t() * src;
-
+	
 	// split b to normals and albedo
 	Mat normal(m_originalImg.begin()->second.rows, m_originalImg.begin()->second.cols, CV_64FC3);
 	Mat normalR(m_originalImg.begin()->second.rows, m_originalImg.begin()->second.cols, CV_64FC3);
@@ -99,20 +171,15 @@ void processor::dumpPly()
 	for(int i = 0; i < m_originalImg.begin()->second.rows; ++i){
 		for(int j = 0; j < m_originalImg.begin()->second.cols; ++j){
 			Vec3d tmp = m_normal.at<Vec3d>(i, j);
-			if(i == 0)
+			if(i == 0){
 				cout << i << " " << j << " " << tmp.val[2] << " 0 0 255" << endl;
-			//else if(m_originalImg.begin()->second.at<uchar>(i,j) == 0.0){
+			}
 			else if(m_albedo.at<double>(i,j) == 0.0){
-				// may lead to an error, cause it should be sampled in six pictures
 				cout << i << " " << j << " " << tmp.val[2] << " 255 0 0" << endl;
-
-
-				// dealing with noise on picture
-
-
 			} 
-			else if(tmp.val[2] != 0)
+			else if(tmp.val[2] != 0){
 				cout << i << " " << j << " " << tmp.val[2] << " 255 255 255" << endl;
+			}
 		}
 	}
 }
@@ -225,7 +292,6 @@ double processor::noiseRecover(int rowindex, int colindex, int matindex){
 
 void processor::imgPreprocessing()
 {
-	imshow("0", m_originalImg.begin()->second);
 	for(int i = 0; i < m_originalImg.size(); ++i){
 		for(int rowindex = 0; rowindex < m_originalImg[i+1].rows; ++rowindex){
 			for(int colindex = 0; colindex < m_originalImg[i+1].cols; ++colindex){
@@ -237,8 +303,7 @@ void processor::imgPreprocessing()
 			}
 		}
 	}
-	imshow("1", m_originalImg.begin()->second);
-	waitKey(0);
+	return ;
 }
 
 void processor::constructSurfaceCH() // from center, horiziontal integrate

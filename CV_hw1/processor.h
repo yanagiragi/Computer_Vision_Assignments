@@ -81,10 +81,13 @@ class processor {
 
 
         // Functions
+        Mat getWeye(int rowindex, int colindex);
+        uchar getWeight(uchar);
         bool isNoise(int, int, int);
         double noiseRecover(int, int, int);
         void imgPreprocessing();
         void calculateNormals();
+        void calculateNormalsWithWeights();
     	Mat foldImgMatrix();
     	Mat foldLightVector();
     	void previewNormals();
@@ -92,6 +95,7 @@ class processor {
     	void constructSurfaceCH();
     	void constructSurfaceH();
     	void constructSurfaceHV();
+
 
     	double clamp(double, double);
     	double clamp(double, double, double);
