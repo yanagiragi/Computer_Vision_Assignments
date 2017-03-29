@@ -9,16 +9,18 @@ int main(int argc, char **argv) {
 
 	processor p = processor(pathname);
 
+	p.imgPreprocessing();
+
 	//std::cout << "Finished Reading LightSource.txt and Src Pictures in directory: " << pathname << std::endl;
 	
 	p.calculateNormals();
 
 	//std::cout << "Finished Calculate Normals" << std::endl;
 
-	//p.previewNormals();
+	p.previewNormals();
 
-	p.constructSurfaceCH();
-	//p.constructSurface();
+	//p.constructSurfaceCH();
+	p.constructSurfaceHV();
 
 	p.dumpPly();
 	

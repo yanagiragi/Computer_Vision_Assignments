@@ -101,12 +101,144 @@ void processor::dumpPly()
 			Vec3d tmp = m_normal.at<Vec3d>(i, j);
 			if(i == 0)
 				cout << i << " " << j << " " << tmp.val[2] << " 0 0 255" << endl;
-			else if(m_originalImg.begin()->second.at<uchar>(i,j) == 0) // may lead to an error, cause it should be sampled in six pictures
+			//else if(m_originalImg.begin()->second.at<uchar>(i,j) == 0.0){
+			else if(m_albedo.at<double>(i,j) == 0.0){
+				// may lead to an error, cause it should be sampled in six pictures
 				cout << i << " " << j << " " << tmp.val[2] << " 255 0 0" << endl;
+
+
+				// dealing with noise on picture
+
+
+			} 
 			else if(tmp.val[2] != 0)
 				cout << i << " " << j << " " << tmp.val[2] << " 255 255 255" << endl;
 		}
 	}
+}
+
+bool processor::isNoise(int rowindex, int colindex, int matindex){
+	int size = m_originalImg.begin()->second.rows;
+	if(rowindex >= 1 && colindex >= 1 && rowindex < size - 1 && colindex < size - 1){
+		// not edge or corner
+		return (
+				pow(m_originalImg[matindex + 1].at<uchar>(rowindex, colindex) - m_originalImg[matindex + 1].at<uchar>(rowindex, colindex - 1), 2) +
+				pow(m_originalImg[matindex + 1].at<uchar>(rowindex, colindex) - m_originalImg[matindex + 1].at<uchar>(rowindex, colindex + 1), 2) +
+				pow(m_originalImg[matindex + 1].at<uchar>(rowindex, colindex) - m_originalImg[matindex + 1].at<uchar>(rowindex - 1, colindex), 2) + 
+				pow(m_originalImg[matindex + 1].at<uchar>(rowindex, colindex) - m_originalImg[matindex + 1].at<uchar>(rowindex + 1, colindex), 2)
+			 ) > noiseThreshold;
+	}
+	else if(rowindex == 0 || colindex == 0 || rowindex == size - 1|| colindex == size - 1) return true;
+	return false;
+}
+
+double processor::noiseRecover(int rowindex, int colindex, int matindex){
+	int size = m_originalImg.begin()->second.rows;
+	
+	return 0.0; // sometimes, brutal leads to better result
+
+	// below is the old ways
+	/*if(rowindex >= 1 && colindex >= 1 && rowindex < size - 1 && colindex < size - 1){
+		// not edge or corner
+		return (
+				m_originalImg[matindex + 1].at<uchar>(rowindex, colindex - 1) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex, colindex + 1) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex - 1, colindex) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex + 1, colindex) 
+			 ) / 4.0;
+	}
+	else if(colindex == 0){
+		if(rowindex == 0){
+			return (
+				m_originalImg[matindex + 1].at<uchar>(rowindex, colindex + 1) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex + 1, colindex) 
+			 ) / 2.0;
+		}
+		else if(rowindex == size - 1){
+			return (
+				m_originalImg[matindex + 1].at<uchar>(rowindex, colindex + 1) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex - 1, colindex) 
+			 ) / 2.0;
+		}
+		else{
+			return (
+				m_originalImg[matindex + 1].at<uchar>(rowindex, colindex + 1) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex - 1, colindex) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex + 1, colindex) 
+			 ) / 3.0;
+		}
+	}
+	else if(rowindex == 0){
+		if(colindex == size - 1){
+			return (
+				m_originalImg[matindex + 1].at<uchar>(rowindex, colindex - 1) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex + 1, colindex) 
+			 ) / 2.0;
+		}
+		else{
+			return (
+				m_originalImg[matindex + 1].at<uchar>(rowindex, colindex - 1) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex, colindex + 1) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex + 1, colindex) 
+			 ) / 3.0;
+		}
+	}
+	else if(colindex == size - 1){
+		if(rowindex == 0){
+			return (
+				m_originalImg[matindex + 1].at<uchar>(rowindex, colindex - 1) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex + 1, colindex) 
+			 ) / 2.0;
+		}
+		else if(rowindex == size - 1){
+			return (
+				m_originalImg[matindex + 1].at<uchar>(rowindex, colindex - 1) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex - 1, colindex) 
+			 ) / 2.0;
+		}
+		else{
+			return (
+				m_originalImg[matindex + 1].at<uchar>(rowindex, colindex - 1) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex - 1, colindex) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex + 1, colindex) 
+			 ) / 3.0;
+		}
+	}
+	else if(rowindex == size - 1){
+		if(colindex == size - 1){
+			return (
+				m_originalImg[matindex + 1].at<uchar>(rowindex, colindex - 1) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex - 1, colindex) 
+			 ) / 2.0;
+		}
+		else{
+			return (
+				m_originalImg[matindex + 1].at<uchar>(rowindex, colindex - 1) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex, colindex + 1) +
+				m_originalImg[matindex + 1].at<uchar>(rowindex - 1, colindex) 
+			 ) / 3.0;
+		}
+	}
+	else
+		return static_cast<double>(m_originalImg[matindex + 1].at<uchar>(rowindex, colindex));*/
+}
+
+void processor::imgPreprocessing()
+{
+	imshow("0", m_originalImg.begin()->second);
+	for(int i = 0; i < m_originalImg.size(); ++i){
+		for(int rowindex = 0; rowindex < m_originalImg[i+1].rows; ++rowindex){
+			for(int colindex = 0; colindex < m_originalImg[i+1].cols; ++colindex){
+				//src.at<double>(i, rowindex * m_originalImg[i+1].cols + colindex) = static_cast<double>(m_originalImg[i+1].at<uchar>(rowindex, colindex)) / 255.0;
+				if(isNoise(rowindex, colindex, i)){
+					//m_originalImg[i+1].at<uchar>(rowindex, colindex) = 0; // force black?
+					m_originalImg[i+1].at<uchar>(rowindex, colindex) = static_cast<uchar>(noiseRecover(rowindex, colindex, i)); // force black?
+				}
+			}
+		}
+	}
+	imshow("1", m_originalImg.begin()->second);
+	waitKey(0);
 }
 
 void processor::constructSurfaceCH() // from center, horiziontal integrate
@@ -135,37 +267,34 @@ void processor::constructSurfaceCH() // from center, horiziontal integrate
 	}
 
 	for(int i = 0; i < m_originalImg.begin()->second.rows; ++i){
-		//x = 0;
-		for(int j = 1, centerC = m_originalImg.begin()->second.cols / 2; j < m_originalImg.begin()->second.cols / 2; ++j){
+		for(int j = 1, centerC = m_originalImg.begin()->second.cols / 2; j < centerC; ++j){
 			
 			double na,nb,nc, partialX, partialY;
 
-			if(m_originalImg.begin()->second.cols / 2 + j < m_originalImg.begin()->second.cols){
-				Vec3d tmp = m_normal.at<Vec3d>(i,m_originalImg.begin()->second.cols / 2 + j);
-				Vec3d prev = m_normal.at<Vec3d>(i, m_originalImg.begin()->second.cols / 2 + j -1);
+			if(centerC+ j < m_originalImg.begin()->second.cols){
+				Vec3d tmp = m_normal.at<Vec3d>(i, centerC + j);
+				Vec3d prev = m_normal.at<Vec3d>(i, centerC + j - 1);
 				na = tmp.val[0]; nb = tmp.val[1]; nc = tmp.val[2];
 
 				partialX = (na == 0 || nc == 0) ? 0.0 : na / nc;
 				partialX = clamp(partialX, threshold);
-				//x += partialX;
 				
-				tmp.val[2] = prev.val[2] - (partialX);				
+				tmp.val[2] = prev.val[2] - (partialX);
 				
-				m_normal.at<Vec3d>(i,j) = tmp;	
+				m_normal.at<Vec3d>(i,centerC + j) = tmp;	
 			}
 
-			if(m_originalImg.begin()->second.cols / 2 - j >= 0){
-				Vec3d tmp = m_normal.at<Vec3d>(i,m_originalImg.begin()->second.cols / 2 - j);
-				Vec3d prev = m_normal.at<Vec3d>(i, m_originalImg.begin()->second.cols / 2 - j + 1);
+			if(centerC - j >= 0){
+				Vec3d tmp = m_normal.at<Vec3d>(i, centerC - j);
+				Vec3d prev = m_normal.at<Vec3d>(i, centerC - j + 1);
 				na = tmp.val[0]; nb = tmp.val[1]; nc = tmp.val[2];
 
 				partialX = (na == 0 || nc == 0) ? 0.0 : na / nc;
 				partialX = clamp(partialX, threshold);
-//				x += partialX;
 				
 				tmp.val[2] = prev.val[2] + (partialX);
 				
-				m_normal.at<Vec3d>(i,j) = tmp;	
+				m_normal.at<Vec3d>(i,centerC - j) = tmp;	
 			}			
 		}
 	}

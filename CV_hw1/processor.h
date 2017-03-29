@@ -24,6 +24,7 @@ class processor {
 
     private :
         const double threshold = 0.5;
+        const double noiseThreshold = 150 * 150 * 5;
         map<int, Mat> m_originalImg = map<int, Mat>();
         map<int, Point3_<int>> m_originalLightSrc = map<int, Point3_<int>>();
         Mat m_normal, m_albedo, m_normalB, m_normalG, m_normalR;
@@ -80,6 +81,9 @@ class processor {
 
 
         // Functions
+        bool isNoise(int, int, int);
+        double noiseRecover(int, int, int);
+        void imgPreprocessing();
         void calculateNormals();
     	Mat foldImgMatrix();
     	Mat foldLightVector();
