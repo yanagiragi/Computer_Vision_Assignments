@@ -62,19 +62,6 @@ class processor {
                 }
             }
             free(str);
-
-            // Tranverse
-            /*for(auto i = m_originalImg.begin(); i != m_originalImg.end(); ++i){                
-                if(i->second.empty()) continue;
-                cout << "id = " << i->first << endl;
-                cout << m_originalLightSrc.find(i->first)->second << endl;
-                
-                imshow("test" + to_string(i->first),i->second);
-                waitKey(250);
-            }
-
-            cout << "Done" << endl;*/
-
         }
 
         ~processor() {}
@@ -95,7 +82,6 @@ class processor {
     	void constructSurfaceCH();
     	void constructSurfaceH();
     	void constructSurfaceHV();
-
 
     	double clamp(double, double);
     	double clamp(double, double, double);

@@ -5,10 +5,6 @@ int main(int argc, char **argv) {
 	int chooseX = 0, chooseY = 0, chooseZ = 0;
 	std::string pathname = "test/bunny/"; // Remeber to add slash at bottom
 
-	if(argv[1][0] == '-'){
-		//return 0;
-	}
-
 	if(argc >= 1 && argv[1][0] == '-'){
 		std::cout << "\nusage: ./cvhw1 $PATH/ $OPTIONS1 $OPTIONS2 $OPTIONS3\n\nPATH: remember to add slash at last character\n\nOPTIONS:" << std::endl;
 		
