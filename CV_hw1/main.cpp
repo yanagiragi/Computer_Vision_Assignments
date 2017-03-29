@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
 
 	//p.previewNormals();
 
-	p.constructSurfaceH();
+	p.constructSurfaceCH();
 	//p.constructSurface();
 
 	p.dumpPly();

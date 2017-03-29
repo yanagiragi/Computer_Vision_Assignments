@@ -109,6 +109,70 @@ void processor::dumpPly()
 	}
 }
 
+void processor::constructSurfaceCH() // from center, horiziontal integrate
+{
+	/*
+		x o x 	< o > 	o o o
+		x o x   x o x 	< o >
+		x o x   x o x 	x o x
+	*/
+	
+	Mat surface(m_originalImg.begin()->second.rows, m_originalImg.begin()->second.cols, CV_64FC3);
+
+	// hold cols, calculate rows for the first time
+	for(int i = m_originalImg.begin()->second.rows, j = m_originalImg.begin()->second.cols / 2; i < m_originalImg.begin()->second.rows; ++i){
+
+		double na,nb,nc, partialX, partialY;
+		Vec3d tmp = m_normal.at<Vec3d>(i,j);
+		na = tmp.val[0]; nb = tmp.val[1]; nc = tmp.val[2];
+
+		partialY = (nb == 0 || nc == 0) ? 0.0 : nb / nc;
+		partialY = clamp(partialY, threshold);
+
+		tmp.val[2] = (i == 0) ? partialY : m_normal.at<Vec3d>(i,j - 1).val[2] + partialY;
+		
+		m_normal.at<Vec3d>(i,0) = tmp;
+	}
+
+	for(int i = 0; i < m_originalImg.begin()->second.rows; ++i){
+		//x = 0;
+		for(int j = 1, centerC = m_originalImg.begin()->second.cols / 2; j < m_originalImg.begin()->second.cols / 2; ++j){
+			
+			double na,nb,nc, partialX, partialY;
+
+			if(m_originalImg.begin()->second.cols / 2 + j < m_originalImg.begin()->second.cols){
+				Vec3d tmp = m_normal.at<Vec3d>(i,m_originalImg.begin()->second.cols / 2 + j);
+				Vec3d prev = m_normal.at<Vec3d>(i, m_originalImg.begin()->second.cols / 2 + j -1);
+				na = tmp.val[0]; nb = tmp.val[1]; nc = tmp.val[2];
+
+				partialX = (na == 0 || nc == 0) ? 0.0 : na / nc;
+				partialX = clamp(partialX, threshold);
+				//x += partialX;
+				
+				tmp.val[2] = prev.val[2] - (partialX);				
+				
+				m_normal.at<Vec3d>(i,j) = tmp;	
+			}
+
+			if(m_originalImg.begin()->second.cols / 2 - j >= 0){
+				Vec3d tmp = m_normal.at<Vec3d>(i,m_originalImg.begin()->second.cols / 2 - j);
+				Vec3d prev = m_normal.at<Vec3d>(i, m_originalImg.begin()->second.cols / 2 - j + 1);
+				na = tmp.val[0]; nb = tmp.val[1]; nc = tmp.val[2];
+
+				partialX = (na == 0 || nc == 0) ? 0.0 : na / nc;
+				partialX = clamp(partialX, threshold);
+//				x += partialX;
+				
+				tmp.val[2] = prev.val[2] + (partialX);
+				
+				m_normal.at<Vec3d>(i,j) = tmp;	
+			}			
+		}
+	}
+	
+	return ;
+}
+
 void processor::constructSurfaceH()
 {
 	/*

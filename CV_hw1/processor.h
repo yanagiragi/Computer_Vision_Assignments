@@ -85,6 +85,7 @@ class processor {
     	Mat foldLightVector();
     	void previewNormals();
     	void dumpPly();
+    	void constructSurfaceCH();
     	void constructSurfaceH();
     	void constructSurfaceHV();
 
