@@ -34,3 +34,7 @@
 CV_hw1/ref
 cvhw1
 dump.*
+
+CV_hw2/test.py
+CV_hw2/*.jpg
+CV_hw2/result/*
