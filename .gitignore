@@ -38,3 +38,4 @@ dump.*
 CV_hw2/test.py
 CV_hw2/*.jpg
 CV_hw2/result/*
+CV_hw2/merge/*
