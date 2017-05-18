@@ -1,15 +1,24 @@
 import cv2
 import numpy as np
+import sys
 
-imgList = ['merge/0.jpg','merge/1.jpg','merge/2.jpg','merge/3.jpg','merge/4.jpg','merge/5.jpg','merge/6.jpg','merge/7.jpg']
+if len(sys.argv) != 3:
+	print ('python3 main.py srcPathPrefix limit(excluded)')
+	print ('Usage: merge {srcPathPrefix}{0-limit-1}-0.jpg to merged.bmp')
+	sys.exit()
 
-target = 'merge/sample.bmp'
+imgList = sys.argv
+
+target = sys.argv[1] + "1-0.jpg"
+print(target)
 targetMat = cv2.imread(target)
 targetMat = np.copy(targetMat)
 targetMat.fill(0)
 
-for img in imgList:
+for i in range(1, int(sys.argv[2])):
 
+	img = sys.argv[1] + str(i) + "-0.jpg"
+	print ('merging ' + img)
 	mat = cv2.imread(img)
 
 	x, y, _ = mat.shape

@@ -34,6 +34,7 @@ def FindKNN(puzzleDes, targetDes, KNN = 5):
 		for i in DiffIndex:
 			if Diff[i] < knnThreshold : # without threshold search space would be too large
 				matches.append({"puzzleIndex" : d, "targetIndex" : i})
+			# matches.append({"puzzleIndex" : d, "targetIndex" : i})
 		
 	return matches
 
